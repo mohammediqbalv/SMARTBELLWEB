@@ -1,0 +1,608 @@
+{% extends "police station/policestationindex.html" %}
+{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Crime History</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        .form-control[type="date"] {
+            cursor: pointer;
+        }
+        .form-control[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .btn-add:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .crime-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .crime-icon i {
+            font-size: 36px;
+            color: white;
+        }
+        .required-label:after {
+            content: " *";
+            color: #dc3545;
+        }
+        .input-with-icon {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        .input-with-icon .form-control {
+            padding-left: 45px;
+        }
+        .timeline-indicator {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            transform: translateX(-50%);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 15px;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .section-divider {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .section-divider:before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: #667eea;
+        }
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .date-validation {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .char-counter {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .alert-warning-custom {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header text-white text-center py-4">
+                    <h3 class="mb-0"><i class="fas fa-history me-2"></i>Add Crime History Record</h3>
+                    <p class="mb-0 opacity-75">Document new crime incident in the database</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form id="form1" name="form1" method="post" action="/MyApp/addcrimehistory_post/">
+                        {% csrf_token %}
+                        
+                        <div class="text-center mb-4">
+                            <div class="crime-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <h5 class="text-muted">Crime Incident Documentation</h5>
+                        </div>
+
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <h5 class="mb-3 section-divider">
+                                <i class="fas fa-info-circle me-2 text-primary"></i>Basic Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="textfield" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-hashtag me-1"></i>Case Number
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-barcode input-icon"></i>
+                                        <input type="text" name="textfield" id="textfield" 
+                                               class="form-control" 
+                                               placeholder="Enter case number (e.g., CR-2024-001)"
+                                               pattern="[A-Za-z0-9-]+"
+                                               required>
+                                    </div>
+                                    <div class="form-text">Format: Prefix-Year-Sequence (e.g., CR-2024-001)</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="textfield4" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-gavel me-1"></i>Crime Type
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-exclamation-triangle input-icon"></i>
+                                        <input type="text" name="textfield4" id="textfield4" 
+                                               class="form-control" 
+                                               placeholder="Robbery, Assault, Burglary, etc."
+                                               required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Section -->
+                        <div class="form-section position-relative">
+                            <div class="timeline-indicator d-none d-lg-block"></div>
+                            <h5 class="mb-3 section-divider">
+                                <i class="fas fa-calendar-alt me-2 text-primary"></i>Incident Timeline
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3 timeline-item">
+                                    <div class="timeline-dot d-none d-lg-block"></div>
+                                    <label for="textfield3" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-calendar-times me-1"></i>Date Occurred
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-calendar input-icon"></i>
+                                        <input type="date" name="textfield3" id="textfield3" 
+                                               class="form-control" 
+                                               max="{{ today }}"
+                                               required>
+                                    </div>
+                                    <div class="date-validation text-danger" id="occurredDateValidation"></div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3 timeline-item">
+                                    <div class="timeline-dot d-none d-lg-block"></div>
+                                    <label for="textfield2" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-calendar-check me-1"></i>Date Reported
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-file-signature input-icon"></i>
+                                        <input type="date" name="textfield2" id="textfield2" 
+                                               class="form-control" 
+                                               max="{{ today }}"
+                                               required>
+                                    </div>
+                                    <div class="date-validation text-danger" id="reportedDateValidation"></div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3 timeline-item">
+                                    <div class="timeline-dot d-none d-lg-block"></div>
+                                    <label for="textfield8" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-handcuffs me-1"></i>Arrest Date
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-calendar-plus input-icon"></i>
+                                        <input type="date" name="textfield8" id="textfield8" 
+                                               class="form-control" 
+                                               max="{{ today }}">
+                                    </div>
+                                    <div class="form-text">Leave empty if no arrest made</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location & Details Section -->
+                        <div class="form-section">
+                            <h5 class="mb-3 section-divider">
+                                <i class="fas fa-map-marker-alt me-2 text-primary"></i>Location & Details
+                            </h5>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="textfield5" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-location-dot me-1"></i>Crime Location
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-map-pin input-icon"></i>
+                                        <input type="text" name="textfield5" id="textfield5" 
+                                               class="form-control" 
+                                               placeholder="Enter exact crime location/address"
+                                               required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 mb-3">
+                                    <label for="textfield6" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-file-lines me-1"></i>Crime Description
+                                    </label>
+                                    <textarea name="textfield6" id="textfield6" 
+                                              class="form-control" 
+                                              rows="4"
+                                              placeholder="Provide detailed description of the crime..."
+                                              maxlength="1000"
+                                              oninput="updateCharCounter('textfield6', 'descCounter')"
+                                              required></textarea>
+                                    <div class="char-counter" id="descCounter">
+                                        <span id="descCount">0</span> / 1000 characters
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Persons Involved Section -->
+                        <div class="form-section">
+                            <h5 class="mb-3 section-divider">
+                                <i class="fas fa-users me-2 text-primary"></i>Persons Involved
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="textfield7" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-user-slash me-1"></i>Suspect(s)
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-user-ninja input-icon"></i>
+                                        <input type="text" name="textfield7" id="textfield7" 
+                                               class="form-control" 
+                                               placeholder="Name(s) of suspect(s)"
+                                               required>
+                                    </div>
+                                    <div class="form-text">Multiple names can be separated by commas</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="textfield10" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-user-injured me-1"></i>Victim(s)
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-user-shield input-icon"></i>
+                                        <input type="text" name="textfield10" id="textfield10" 
+                                               class="form-control" 
+                                               placeholder="Name(s) of victim(s)"
+                                               required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 mb-3">
+                                    <label for="textfield9" class="form-label fw-semibold required-label">
+                                        <i class="fas fa-scale-balanced me-1"></i>Charge(s)
+                                    </label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-gavel input-icon"></i>
+                                        <input type="text" name="textfield9" id="textfield9" 
+                                               class="form-control" 
+                                               placeholder="Legal charges against suspect(s)"
+                                               required>
+                                    </div>
+                                    <div class="form-text">List all applicable charges</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mb-4">
+                            <label for="additionalInfo" class="form-label fw-semibold">
+                                <i class="fas fa-clipboard-list me-1 text-primary"></i>Additional Information
+                            </label>
+                            <textarea name="additionalInfo" id="additionalInfo" 
+                                      class="form-control" 
+                                      rows="3"
+                                      placeholder="Evidence collected, witness statements, investigation notes, etc."
+                                      maxlength="500"
+                                      oninput="updateCharCounter('additionalInfo', 'additionalCounter')"></textarea>
+                            <div class="char-counter" id="additionalCounter">
+                                <span id="additionalCount">0</span> / 500 characters
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                          
+                            <button type="submit" name="button" id="button" class="btn btn-add text-white">
+                                <i class="fas fa-plus-circle me-1"></i> Add Crime Record
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Guidelines Footer -->
+                <div class="card-footer bg-light">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-warning-custom">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Important Guidelines
+                                </h6>
+                                <ul class="mb-0" style="font-size: 0.9rem;">
+                                    <li>Ensure all dates follow chronological order (occurred ≤ reported ≤ arrested)</li>
+                                    <li>Use specific and detailed descriptions for accurate records</li>
+                                    <li>Verify all names and spellings of involved persons</li>
+                                    <li>Include precise location details for future reference</li>
+                                    <li>Double-check case number format to avoid duplicates</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set today's date as max for all date inputs
+        const today = new Date().toISOString().split('T')[0];
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.setAttribute('max', today);
+        });
+        
+        // Set default values for better UX
+        document.getElementById('textfield2').value = today; // Reported date defaults to today
+        document.getElementById('textfield3').value = today; // Occurred date defaults to today
+        
+        // Initialize character counters
+        updateCharCounter('textfield6', 'descCounter');
+        updateCharCounter('additionalInfo', 'additionalCounter');
+        
+        // Add date validation listeners
+        document.getElementById('textfield3').addEventListener('change', validateDates);
+        document.getElementById('textfield2').addEventListener('change', validateDates);
+        document.getElementById('textfield8').addEventListener('change', validateDates);
+    });
+    
+    // Update character counter
+    function updateCharCounter(textareaId, counterId) {
+        const textarea = document.getElementById(textareaId);
+        const counter = document.getElementById(counterId);
+        const countSpan = document.getElementById(counterId.replace('Counter', 'Count'));
+        const charCount = textarea.value.length;
+        const maxLength = textarea.maxLength;
+        
+        countSpan.textContent = charCount;
+        
+        if (charCount > maxLength * 0.9) {
+            counter.classList.add('text-danger');
+            counter.classList.remove('text-warning');
+        } else if (charCount > maxLength * 0.75) {
+            counter.classList.add('text-warning');
+            counter.classList.remove('text-danger');
+        } else {
+            counter.classList.remove('text-danger', 'text-warning');
+        }
+        
+        // Trim if exceeds max length
+        if (charCount > maxLength) {
+            textarea.value = textarea.value.substring(0, maxLength);
+            updateCharCounter(textareaId, counterId);
+        }
+    }
+    
+    // Validate date chronology
+    function validateDates() {
+        const occurredDate = new Date(document.getElementById('textfield3').value);
+        const reportedDate = new Date(document.getElementById('textfield2').value);
+        const arrestDateInput = document.getElementById('textfield8');
+        const occurredValidation = document.getElementById('occurredDateValidation');
+        const reportedValidation = document.getElementById('reportedDateValidation');
+        
+        // Reset validation messages
+        occurredValidation.style.display = 'none';
+        reportedValidation.style.display = 'none';
+        
+        let isValid = true;
+        
+        // Check if occurred date is not in future (handled by max attribute)
+        
+        // Check if reported date is not before occurred date
+        if (reportedDate < occurredDate) {
+            reportedValidation.textContent = 'Reported date cannot be before occurrence date';
+            reportedValidation.style.display = 'block';
+            isValid = false;
+        }
+        
+        // Check if occurred date is not after reported date (redundant but clear)
+        if (occurredDate > reportedDate) {
+            occurredValidation.textContent = 'Occurrence date cannot be after report date';
+            occurredValidation.style.display = 'block';
+            isValid = false;
+        }
+        
+        // Validate arrest date if provided
+        if (arrestDateInput.value) {
+            const arrestDate = new Date(arrestDateInput.value);
+            
+            if (arrestDate < occurredDate) {
+                alert('Arrest date cannot be before crime occurrence date');
+                arrestDateInput.value = '';
+                isValid = false;
+            }
+            
+            if (arrestDate > new Date()) {
+                alert('Arrest date cannot be in the future');
+                arrestDateInput.value = '';
+                isValid = false;
+            }
+        }
+        
+        return isValid;
+    }
+    
+    // Form validation
+    document.getElementById('form1').addEventListener('submit', function(e) {
+        let isValid = true;
+        const errors = [];
+        
+        // Validate case number format
+        const caseNumber = document.getElementById('textfield').value;
+        if (!/^[A-Za-z0-9-]+$/.test(caseNumber)) {
+            errors.push('Case number can only contain letters, numbers, and hyphens');
+            isValid = false;
+        }
+        
+        // Validate dates
+        if (!validateDates()) {
+            errors.push('Please fix date validation errors');
+            isValid = false;
+        }
+        
+        // Validate description length
+        const description = document.getElementById('textfield6').value;
+        if (description.length < 20) {
+            errors.push('Crime description should be at least 20 characters');
+            isValid = false;
+        }
+        
+        // Validate location
+        const location = document.getElementById('textfield5').value;
+        if (location.length < 5) {
+            errors.push('Please provide a more specific location');
+            isValid = false;
+        }
+        
+        // Show errors if any
+        if (errors.length > 0) {
+            e.preventDefault();
+            alert('Please fix the following errors:\n\n' + errors.join('\n'));
+            
+            // Scroll to first error
+            document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            // Show loading state
+            const submitButton = document.getElementById('button');
+            const originalHTML = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Adding...';
+            submitButton.disabled = true;
+            
+            // Allow form submission to proceed
+            setTimeout(() => {
+                submitButton.innerHTML = originalHTML;
+                submitButton.disabled = false;
+            }, 3000);
+        }
+    });
+    
+    // Clear form confirmation
+    document.querySelector('button[type="reset"]').addEventListener('click', function(e) {
+        if (!confirm('Are you sure you want to clear all form fields?')) {
+            e.preventDefault();
+        } else {
+            // Reset character counters
+            setTimeout(() => {
+                updateCharCounter('textfield6', 'descCounter');
+                updateCharCounter('additionalInfo', 'additionalCounter');
+                document.getElementById('textfield2').value = new Date().toISOString().split('T')[0];
+                document.getElementById('textfield3').value = new Date().toISOString().split('T')[0];
+            }, 100);
+        }
+    });
+    
+    // Cancel confirmation
+    window.addEventListener('beforeunload', function(e) {
+        const form = document.getElementById('form1');
+        const formChanged = form.checkValidity() || Array.from(form.elements).some(el => 
+            (el.type === 'text' || el.type === 'textarea' || el.type === 'date') && 
+            el.value.trim() !== '' && el.value !== el.defaultValue
+        );
+        
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        }
+    });
+    
+    // Auto-format case number
+    document.getElementById('textfield').addEventListener('blur', function() {
+        let caseNumber = this.value.trim().toUpperCase();
+        // Add CR- prefix if not present and looks like a year
+        if (/^\d{4}-\d{3}$/.test(caseNumber)) {
+            caseNumber = 'CR-' + caseNumber;
+        }
+        this.value = caseNumber;
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            document.getElementById('form1').submit();
+        }
+        
+        // Ctrl/Cmd + R to reset
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            if (confirm('Clear all form fields?')) {
+                document.getElementById('form1').reset();
+                updateCharCounter('textfield6', 'descCounter');
+                updateCharCounter('additionalInfo', 'additionalCounter');
+                document.getElementById('textfield2').value = new Date().toISOString().split('T')[0];
+                document.getElementById('textfield3').value = new Date().toISOString().split('T')[0];
+            }
+        }
+    });
+</script>
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,424 @@
+{% extends "police station/policestationindex.html" %}
+{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Police Station Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .profile-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .profile-avatar i {
+            font-size: 50px;
+            color: #667eea;
+        }
+        .profile-info {
+            padding: 30px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .info-content {
+            flex-grow: 1;
+        }
+        .info-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 1.1rem;
+            color: #343a40;
+            font-weight: 600;
+        }
+        .contact-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .contact-btn {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .stats-icon {
+            font-size: 30px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .edit-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        .edit-btn:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+        .map-container {
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .map-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="profile-card">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                  
+                    <div class="profile-avatar">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="mb-2">{{ data.policestationname }}</h3>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{ data.place }}, {{ data.post }}
+                    </p>
+                </div>
+
+                <!-- Profile Info -->
+                <div class="profile-info">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-lg-6">
+                            <!-- Station Name -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Station Name</div>
+                                    <div class="info-value">{{ data.policestationname }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Location</div>
+                                    <div class="info-value">
+                                        <div>{{ data.place }}</div>
+                                        <div class="text-muted">{{ data.post }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PIN Code -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-map-pin"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">PIN Code</div>
+                                    <div class="info-value">
+                                        <span class="badge bg-light text-dark">{{ data.pin }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-lg-6">
+                            <!-- Contact Information -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Contact Number</div>
+                                    <div class="info-value">{{ data.phoneno }}</div>
+                                    <div class="contact-buttons">
+                                        <a href="tel:{{ data.phoneno }}" class="btn btn-sm btn-outline-primary contact-btn">
+                                            <i class="fas fa-phone"></i> Call
+                                        </a>
+                                        <a href="sms:{{ data.phoneno }}" class="btn btn-sm btn-outline-success contact-btn">
+                                            <i class="fas fa-sms"></i> SMS
+                                        </a>
+                                        <button onclick="copyToClipboard('{{ data.phoneno }}')" class="btn btn-sm btn-outline-secondary contact-btn">
+                                            <i class="fas fa-copy"></i> Copy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Email Address</div>
+                                    <div class="info-value">
+                                        {% if data.email %}
+                                            <a href="mailto:{{ data.email }}" class="text-decoration-none">
+                                                {{ data.email }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="contact-buttons">
+                                        {% if data.email %}
+                                        <a href="mailto:{{ data.email }}" class="btn btn-sm btn-outline-primary contact-btn">
+                                            <i class="fas fa-envelope"></i> Email
+                                        </a>
+                                        <button onclick="copyToClipboard('{{ data.email }}')" class="btn btn-sm btn-outline-secondary contact-btn">
+                                            <i class="fas fa-copy"></i> Copy
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Station Code -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-hashtag"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Station Code</div>
+                                    <div class="info-value">
+                                        <span class="badge bg-primary">PS-{{ data.id|default:"001" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                  
+                    <!-- Map Section -->
+                    <div class="map-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-map me-2 text-primary"></i>
+                            Location Map
+                        </h5>
+                        <div class="map-placeholder">
+                            <div class="text-center">
+                                <i class="fas fa-map-marked-alt fa-3x mb-3"></i>
+                                <h6>{{ data.policestationname }}</h6>
+                                <p class="mb-0">{{ data.place }}, {{ data.post }} - {{ data.pin }}</p>
+                                <small>PIN: {{ data.pin }}</small>
+                            </div>
+                        </div>
+                       
+                    </div>
+
+                  
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Copy to clipboard function
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Copied to clipboard!', 'success');
+        }).catch(function(err) {
+            console.error('Could not copy text: ', err);
+            showToast('Failed to copy text', 'error');
+        });
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        // Remove existing toasts
+        const existingToast = document.getElementById('copyToast');
+        if (existingToast) existingToast.remove();
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.id = 'copyToast';
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0 position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050;';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Initialize and show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Remove toast after hiding
+        toast.addEventListener('hidden.bs.toast', function () {
+            toast.remove();
+        });
+    }
+
+    // Share profile function
+    function shareProfile() {
+        const profileInfo = `
+Police Station: ${document.querySelector('.info-value:nth-child(1)').textContent}
+Location: ${document.querySelector('.info-value:nth-child(2)').textContent}
+PIN: ${document.querySelector('.badge.bg-light').textContent}
+Phone: ${document.querySelector('.info-value:nth-child(3)').textContent}
+Email: ${document.querySelector('.info-value:nth-child(4)').textContent}
+        `.trim();
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'Police Station Profile',
+                text: profileInfo,
+                url: window.location.href
+            }).then(() => {
+                console.log('Thanks for sharing!');
+            }).catch(console.error);
+        } else {
+            copyToClipboard(profileInfo);
+        }
+    }
+
+    // Print profile details
+    function printProfile() {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Police Station Profile - ${document.querySelector('h3').textContent}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .info-item { margin-bottom: 15px; }
+                        .label { font-weight: bold; color: #666; }
+                        .value { margin-top: 5px; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>Police Station Profile</h2>
+                        <h3>${document.querySelector('h3').textContent}</h3>
+                        <p>Generated on: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    <div class="content">
+                        ${Array.from(document.querySelectorAll('.info-item')).map(item => `
+                            <div class="info-item">
+                                <div class="label">${item.querySelector('.info-label').textContent}</div>
+                                <div class="value">${item.querySelector('.info-value').textContent}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    // Initialize Bootstrap toast if not loaded
+    if (typeof bootstrap === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js';
+        document.head.appendChild(script);
+    }
+
+    // Add print functionality to print button
+    document.addEventListener('DOMContentLoaded', function() {
+        const printBtn = document.querySelector('.btn-outline-success');
+        if (printBtn) {
+            printBtn.addEventListener('click', printProfile);
+        }
+    });
+</script>
+</body>
+</html>
+{% endblock %}

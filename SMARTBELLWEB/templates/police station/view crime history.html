@@ -1,0 +1,750 @@
+{% extends "police station/policestationindex.html" %}
+{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime History Records</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .case-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .case-card:hover {
+            background: #eef2ff;
+            transform: translateX(5px);
+        }
+        .case-card.closed {
+            border-left-color: #51cf66;
+        }
+        .case-card.investigation {
+            border-left-color: #ffd43b;
+        }
+        .case-card.pending {
+            border-left-color: #ff6b6b;
+        }
+        .case-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .badge-open {
+            background-color: #ffeaa7;
+            color: #8c7000;
+        }
+        .badge-closed {
+            background-color: #d1f7c4;
+            color: #0d6b2d;
+        }
+        .badge-investigation {
+            background-color: #a5d8ff;
+            color: #1864ab;
+        }
+        .crime-type-tag {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            background-color: #f0f0f0;
+            color: #495057;
+            display: inline-block;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .date-filter {
+            border-radius: 10px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .date-filter:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .crime-icon {
+            font-size: 24px;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        .btn-action {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        .timeline-indicator {
+            width: 2px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 3px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+            z-index: 1;
+        }
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+        .case-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+            background: #f0f4ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .location-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        .victim-indicator {
+            color: #ff6b6b;
+        }
+        .suspect-indicator {
+            color: #fa5252;
+        }
+        .person-cell {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .description-preview {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-history me-2"></i>Crime History Records</h4>
+                        <a href="/MyApp/addcrimehistory/" class="btn btn-light btn-sm">
+                            <i class="fas fa-plus-circle me-1"></i> Add New Crime
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stats-card">
+                                <div class="crime-icon">
+                                    <i class="fas fa-file-circle-exclamation"></i>
+                                </div>
+                                <h5 class="mb-1">Total Cases</h5>
+                                <h3 class="mb-0">{{ data|length }}</h3>
+                            </div>
+                        </div>
+                        
+                       
+                       
+                    </div>
+
+                    <!-- Date Filter Form -->
+                    <form id="form1" name="form1" method="post" action="/MyApp/viewcrimehistory_post/#ab" class="mb-4">
+                        {% csrf_token %}
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4 col-lg-3">
+                                <label for="textfield" class="form-label fw-semibold">
+                                    <i class="fas fa-calendar-start me-1"></i>From Date
+                                </label>
+                                <input type="date" name="textfield" id="textfield" 
+                                       class="form-control date-filter" required>
+                            </div>
+                            <div class="col-md-4 col-lg-3">
+                                <label for="textfield2" class="form-label fw-semibold">
+                                    <i class="fas fa-calendar-end me-1"></i>To Date
+                                </label>
+                                <input type="date" name="textfield2" id="textfield2" 
+                                       class="form-control date-filter" required>
+                            </div>
+                            <div class="col-md-4 col-lg-3">
+                                <button type="submit" name="button" id="button" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+                            </div>
+                           
+                        </div>
+                    </form>
+
+                    <!-- Quick Filter Buttons -->
+                  
+                    <!-- Cases Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="crimeTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="3%">#</th>
+                                    <th width="12%">Case Details</th>
+                                    <th width="10%">Dates</th>
+                                    <th width="12%">Crime Type</th>
+                                    <th width="12%">Location</th>
+                                    <th width="10%">Persons Involved</th>
+                                    <th width="10%">Arrest Info</th>
+                                    <th width="15%">Charges & Description</th>
+                                    <th width="8%">Status</th>
+                                    <th width="8%" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in data %}
+                                <tr class="{% if i.arrest_date %}table-success{% else %}table-warning{% endif %}">
+                                    <td class="fw-semibold">{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="case-number mb-1">{{ i.casenumber }}</span>
+                                            <small class="text-muted">
+                                                ID: {{ i.id|stringformat:"04d" }}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="timeline-item" style="min-height: 80px;">
+                                            <div class="timeline-indicator"></div>
+                                            <div class="timeline-dot"></div>
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block">Occurred:</small>
+                                                <strong>{{ i.date_occured}}</strong>
+                                            </div>
+                                            <div class="timeline-dot" style="top: 45px;"></div>
+                                            <div>
+                                                <small class="text-muted d-block">Reported:</small>
+                                                <strong>{{ i.date_reposted}}</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="crime-type-tag">
+                                            <i class="fas fa-gavel me-1"></i>
+                                            {{ i.crime_type|truncatewords:3 }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="location-badge">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span class="truncate-text" style="max-width: 120px;">
+                                                {{ i.location }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-user-injured victim-indicator me-1"></i>Victim:
+                                                </small>
+                                                <span class="person-cell">
+                                                    {{ i.victim|default:"Unknown" }}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-user-slash suspect-indicator me-1"></i>Suspect:
+                                                </small>
+                                                <span class="person-cell">
+                                                    {{ i.suspect|default:"Unknown" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if i.arrest_date %}
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold">{{ i.arrest_date }}</span>
+                                                <small class="text-success">
+                                                    <i class="fas fa-check-circle me-1"></i> Arrested
+                                                </small>
+                                                <small class="text-muted">
+                                                    Days to arrest: 
+                                                    {{ i.arrest_date }}
+                                                </small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">
+                                                <i class="fas fa-clock me-1"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block">Charges:</small>
+                                                <span class="fw-semibold">{{ i.charge|truncatewords:5 }}</span>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Description:</small>
+                                                <div class="description-preview">
+                                                    {{ i.sentence|default:"No description" }}
+                                                </div>
+                                                {% if i.sentence and i.sentence|length > 100 %}
+                                                <button class="btn btn-link btn-sm p-0 mt-1" 
+                                                        onclick="viewDescription('{{ i.sentence|escapejs }}', '{{ i.casenumber }}')">
+                                                    <i class="fas fa-expand-alt me-1"></i> Read more
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if i.arrest_date %}
+                                            <span class="case-badge badge-closed">
+                                                <i class="fas fa-check-circle me-1"></i> Closed
+                                            </span>
+                                        {% else %}
+                                            <span class="case-badge badge-investigation">
+                                                <i class="fas fa-search me-1"></i> Investigation
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="/MyApp/deletecrimehistory/{{ i.id }}" 
+                                               class="btn btn-outline-danger" 
+                                               title="Delete Record" data-bs-toggle="tooltip"
+                                               onclick="return confirmDelete('{{ i.casenumber }}')">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                           
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    title="Case Timeline" data-bs-toggle="tooltip"
+                                                    onclick="showCaseTimeline('{{ i.casenumber }}')">
+                                                <i class="fas fa-stream"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10">
+                                        <div class="empty-state">
+                                            <i class="fas fa-file-circle-xmark fa-3x text-muted mb-3"></i>
+                                            <h5 class="text-muted">No Crime Records Found</h5>
+                                            <p class="text-muted">No crime history records for the selected date range</p>
+                                            <a href="/MyApp/addcrimehistory/" class="btn btn-primary mt-2">
+                                                <i class="fas fa-plus-circle me-1"></i> Add First Crime Record
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination (if needed) -->
+                    {% if data|length > 10 %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+                
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Case Details Modal -->
+<div class="modal fade" id="caseDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-file-lines me-2"></i>Case Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Case Number:</label>
+                            <div class="form-control bg-light" id="modalCaseNumber"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Crime Type:</label>
+                            <div class="form-control" id="modalCrimeType"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Location:</label>
+                            <div class="form-control" id="modalLocation"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Victim:</label>
+                            <div class="form-control" id="modalVictim"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Suspect:</label>
+                            <div class="form-control" id="modalSuspect"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date Occurred:</label>
+                            <div class="form-control" id="modalDateOccurred"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date Reported:</label>
+                            <div class="form-control" id="modalDateReported"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Arrest Date:</label>
+                            <div class="form-control" id="modalArrestDate"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Charges:</label>
+                            <div class="form-control" id="modalCharges"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Case Description:</label>
+                    <div class="form-control" style="min-height: 150px; white-space: pre-wrap;" id="modalDescription"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="printCase()">
+                    <i class="fas fa-print me-1"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Description View Modal -->
+<div class="modal fade" id="descriptionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="descriptionTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-control" style="min-height: 200px; white-space: pre-wrap;" id="fullDescription"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default date values
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        document.getElementById('textfield2').valueAsDate = today;
+        document.getElementById('textfield').valueAsDate = thirtyDaysAgo;
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // View case details in modal
+    function viewCaseDetails(caseNumber, dateReported, dateOccurred, crimeType, location, victim, suspect, arrestDate, charge, description) {
+        document.getElementById('modalCaseNumber').textContent = caseNumber;
+        document.getElementById('modalDateReported').textContent = formatDate(dateReported);
+        document.getElementById('modalDateOccurred').textContent = formatDate(dateOccurred);
+        document.getElementById('modalCrimeType').textContent = crimeType;
+        document.getElementById('modalLocation').textContent = location;
+        document.getElementById('modalVictim').textContent = victim || 'Not specified';
+        document.getElementById('modalSuspect').textContent = suspect || 'Not specified';
+        document.getElementById('modalArrestDate').textContent = arrestDate ? formatDate(arrestDate) : 'Not arrested';
+        document.getElementById('modalCharges').textContent = charge || 'Charges pending';
+        document.getElementById('modalDescription').textContent = description || 'No description available';
+        
+        const modal = new bootstrap.Modal(document.getElementById('caseDetailsModal'));
+        modal.show();
+    }
+    
+    // View full description
+    function viewDescription(description, caseNumber) {
+        document.getElementById('descriptionTitle').textContent = `Case ${caseNumber} - Description`;
+        document.getElementById('fullDescription').textContent = description;
+        
+        const modal = new bootstrap.Modal(document.getElementById('descriptionModal'));
+        modal.show();
+    }
+    
+    // Show case timeline
+    function showCaseTimeline(caseNumber) {
+        alert(`Timeline view for case ${caseNumber} would be displayed here.\n\nThis feature would show the chronological sequence of events for this case.`);
+    }
+    
+    // Format date for display
+  
+    
+    // Enhanced delete confirmation
+    function confirmDelete(caseNumber) {
+        return confirm(`Are you sure you want to delete crime record for case ${caseNumber}?\n\nThis action cannot be undone and will permanently remove the record from the database.`);
+    }
+    
+    // Filter functions
+    function filterByStatus(status) {
+        const rows = document.querySelectorAll('#crimeTable tbody tr');
+        rows.forEach(row => {
+            const arrestDate = row.querySelector('td:nth-child(7)').textContent;
+            const isArrested = !arrestDate.includes('Pending');
+            
+            if (status === 'arrested' && isArrested) {
+                row.style.display = '';
+            } else if (status === 'pending' && !isArrested) {
+                row.style.display = '';
+            } else if (status === 'arrested' && !isArrested) {
+                row.style.display = 'none';
+            } else if (status === 'pending' && isArrested) {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    function showAllCases() {
+        const rows = document.querySelectorAll('#crimeTable tbody tr');
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+    }
+    
+    function resetFilters() {
+        document.getElementById('textfield').value = '';
+        document.getElementById('textfield2').value = '';
+        showAllCases();
+    }
+    
+    // Export data function
+    function exportData() {
+        const table = document.getElementById('crimeTable');
+        let csv = [];
+        
+        // Get headers
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(header => {
+            if (header.textContent.trim() !== 'Actions') {
+                headers.push(header.textContent.trim());
+            }
+        });
+        csv.push(headers.join(','));
+        
+        // Get rows data
+        table.querySelectorAll('tbody tr').forEach(row => {
+            const rowData = [];
+            const cells = row.querySelectorAll('td');
+            
+            // Skip actions column (last one)
+            for (let i = 0; i < cells.length - 1; i++) {
+                let cellText = cells[i].textContent.trim();
+                // Clean up the text
+                cellText = cellText.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+                rowData.push(`"${cellText}"`);
+            }
+            
+            csv.push(rowData.join(','));
+        });
+        
+        // Create and download CSV file
+        const csvContent = csv.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `crime_history_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        alert('Data exported successfully as CSV file.');
+    }
+    
+    // Print report
+    function printReport() {
+        const printContent = document.getElementById('crimeTable').outerHTML;
+        const originalContent = document.body.innerHTML;
+        
+        document.body.innerHTML = `
+            <html>
+                <head>
+                    <title>Crime History Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; text-align: left; }
+                        td { border: 1px solid #dee2e6; padding: 8px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>Crime History Report</h2>
+                        <p>Generated on: ${new Date().toLocaleDateString()}</p>
+                        <p>Period: ${document.getElementById('textfield').value || 'All dates'} to ${document.getElementById('textfield2').value || 'All dates'}</p>
+                    </div>
+                    ${printContent}
+                    <div class="footer">
+                        <p>Police Station Database | Confidential Report</p>
+                    </div>
+                </body>
+            </html>
+        `;
+        
+        window.print();
+        document.body.innerHTML = originalContent;
+        location.reload();
+    }
+    
+    // Print individual case
+    function printCase() {
+        const caseNumber = document.getElementById('modalCaseNumber').textContent;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Case Details - ${caseNumber}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .case-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .info-section { margin-bottom: 20px; }
+                        .info-label { font-weight: bold; color: #666; margin-bottom: 5px; }
+                        .info-value { margin-left: 20px; }
+                        @media print {
+                            body { padding: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="case-header">
+                        <h2>Crime Case Details</h2>
+                        <h3>Case Number: ${caseNumber}</h3>
+                        <p>Generated on: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Crime Type:</div>
+                        <div class="info-value">${document.getElementById('modalCrimeType').textContent}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Location:</div>
+                        <div class="info-value">${document.getElementById('modalLocation').textContent}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Dates:</div>
+                        <div class="info-value">
+                            Occurred: ${document.getElementById('modalDateOccurred').textContent}<br>
+                            Reported: ${document.getElementById('modalDateReported').textContent}<br>
+                            Arrest: ${document.getElementById('modalArrestDate').textContent}
+                        </div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Persons Involved:</div>
+                        <div class="info-value">
+                            Victim: ${document.getElementById('modalVictim').textContent}<br>
+                            Suspect: ${document.getElementById('modalSuspect').textContent}
+                        </div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Charges:</div>
+                        <div class="info-value">${document.getElementById('modalCharges').textContent}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Case Description:</div>
+                        <div class="info-value">${document.getElementById('modalDescription').textContent}</div>
+                    </div>
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+                        <p>--- END OF REPORT ---</p>
+                        <p>Police Station Database | Confidential Document</p>
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>
+</body>
+</html>
+{% endblock %}

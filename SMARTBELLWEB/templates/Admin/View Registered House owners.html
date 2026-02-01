@@ -1,0 +1,427 @@
+{% extends "Admin/homeindex.html" %}
+{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registered House Owners</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .owner-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #667eea;
+        }
+        .house-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            transition: transform 0.3s ease;
+        }
+        .house-image:hover {
+            transform: scale(1.5);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            position: relative;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-active {
+            background-color: #d1f7c4;
+            color: #0d6b2d;
+        }
+        .status-pending {
+            background-color: #ffeaa7;
+            color: #8c7000;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 20px;
+            padding: 8px 15px;
+            border: 1px solid #dee2e6;
+        }
+        .dataTables_wrapper .dataTables_length select {
+            border-radius: 10px;
+            padding: 5px 10px;
+        }
+        .btn-export {
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-weight: 500;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        .search-box {
+            border-radius: 20px;
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .search-box:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-home me-2"></i>Registered House Owners</h4>
+                        <div>
+                            <span class="badge bg-light text-dark fs-6">
+                                <i class="fas fa-users me-1"></i> {{ data|length }} Owners
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="info-card text-center">
+                                <i class="fas fa-user-check fa-2x text-primary mb-2"></i>
+                                <h5 class="mb-1">Total Owners</h5>
+                                <h3 class="mb-0">{{ data|length }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-card text-center">
+                                <i class="fas fa-home fa-2x text-success mb-2"></i>
+                                <h5 class="mb-1">Total Houses</h5>
+                                <h3 class="mb-0">{{ data|length }}</h3>
+                            </div>
+                        </div>
+                       
+                    </div>
+
+                    <!-- Search and Action Bar -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form id="searchForm" method="post" action="/MyApp/Viewregisteredhouseowners_post/#ab">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" name="textfield" id="textfield" 
+                                           class="form-control search-box border-start-0" 
+                                           placeholder="Search by owner name, house name, place, phone or email...">
+                                    <button type="submit" name="button" class="btn btn-primary">
+                                        <i class="fas fa-search me-1"></i> Search
+                                    </button>
+                                  
+                                </div>
+                            </form>
+                        </div>
+                      
+                    </div>
+
+                    <!-- DataTable -->
+                    <div class="table-responsive">
+                        <table class="table table-hover display" id="ownersTable" style="width:100%">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="3%">#</th>
+                                    <th width="10%">Photo</th>
+                                    <th width="12%">Owner Name</th>
+                                    <th width="15%">House Name</th>
+                                    <th width="10%">Place</th>
+                                    <th width="10%">Post</th>
+                                    <th width="8%">PIN</th>
+                                    <th width="10%">Phone No</th>
+                                    <th width="15%">Email</th>
+                                    <th width="7%">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in data %}
+                                <tr>
+                                    <td class="fw-semibold">{{ forloop.counter }}</td>
+                                    <td>
+                                        {% if i.photo %}
+                                            <img src="{{ i.photo }}" class="owner-avatar" 
+                                                 data-bs-toggle="modal" data-bs-target="#imageModal{{ forloop.counter }}"
+                                                 title="Click to view larger">
+                                        {% else %}
+                                            <div class="owner-avatar bg-light d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Image Modal -->
+                                        <div class="modal fade" id="imageModal{{ forloop.counter }}" tabindex="-1">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">{{ i.ownername }}'s Photo</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-center">
+                                                        {% if i.photo %}
+                                                            <img src="{{ i.photo }}" class="img-fluid rounded" style="max-height: 500px;">
+                                                        {% else %}
+                                                            <div class="py-5 text-muted">
+                                                                <i class="fas fa-user-slash fa-3x mb-3"></i>
+                                                                <p>No photo available</p>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <i class="fas fa-user-circle text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <strong>{{ i.ownername }}</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <i class="fas fa-home text-success"></i>
+                                            </div>
+                                            <div>
+                                                {{ i.housename }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                        {{ i.place }}
+                                    </td>
+                                    <td>{{ i.post }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ i.pin }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-phone text-success me-2"></i>
+                                            <div>
+                                                <a href="tel:{{ i.phoneno }}" class="text-decoration-none">
+                                                    {{ i.phoneno }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-envelope text-primary me-2"></i>
+                                            <div>
+                                                {% if i.email %}
+                                                    <a href="mailto:{{ i.email }}" class="text-decoration-none text-truncate d-inline-block" style="max-width: 150px;">
+                                                        {{ i.email }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">N/A</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-active">
+                                            <i class="fas fa-check-circle me-1"></i> Active
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <h5>No House Owners Found</h5>
+                                            <p class="mb-0">No registered house owners in the system</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Summary Footer -->
+                <div class="card-footer bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Showing {{ data|length }} registered house owner(s)
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Last updated: {{ "now"|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        const table = $('#ownersTable').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [5, 10, 25, 50, 100],
+            "order": [[2, 'asc']], // Sort by Owner Name by default
+            "language": {
+                "lengthMenu": "Show _MENU_ entries per page",
+                "zeroRecords": "No matching house owners found",
+                "info": "Showing _START_ to _END_ of _TOTAL_ owners",
+                "infoEmpty": "No owners available",
+                "infoFiltered": "(filtered from _MAX_ total owners)",
+                "search": "Quick Filter:",
+                "paginate": {
+                    "first": "First",
+                    "last": "Last",
+                    "next": "Next",
+                    "previous": "Previous"
+                }
+            },
+            "dom": '<"row"<"col-md-6"B><"col-md-6"f>>' +
+                   '<"row"<"col-md-12"tr>>' +
+                   '<"row"<"col-md-5"i><"col-md-7"p>>',
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel me-1"></i> Excel',
+                    className: 'btn btn-success btn-sm',
+                    title: 'Registered_House_Owners'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fas fa-file-pdf me-1"></i> PDF',
+                    className: 'btn btn-danger btn-sm',
+                    title: 'Registered_House_Owners'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print me-1"></i> Print',
+                    className: 'btn btn-info btn-sm',
+                    title: 'Registered House Owners - Report'
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="fas fa-columns me-1"></i> Columns',
+                    className: 'btn btn-secondary btn-sm'
+                }
+            ],
+            "initComplete": function() {
+                // Add custom filters
+                const api = this.api();
+                
+                // Add filter for status
+                $('<select class="form-select form-select-sm ms-2 d-inline-block w-auto"><option value="">All Status</option><option value="Active">Active</option><option value="Pending">Pending</option></select>')
+                    .appendTo($('.dt-buttons'))
+                    .on('change', function() {
+                        api.column(9).search(this.value).draw();
+                    });
+                
+                // Add filter for place
+                const places = [...new Set(api.column(4).data().toArray())];
+                const placeFilter = $('<select class="form-select form-select-sm ms-2 d-inline-block w-auto"><option value="">All Places</option></select>');
+                places.forEach(place => {
+                    if (place) {
+                        placeFilter.append(`<option value="${place}">${place}</option>`);
+                    }
+                });
+                placeFilter.appendTo($('.dt-buttons')).on('change', function() {
+                    api.column(4).search(this.value).draw();
+                });
+            }
+        });
+        
+        // Custom search from form
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault();
+            const searchTerm = $('#textfield').val();
+            table.search(searchTerm).draw();
+        });
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // Export functions
+    function exportToExcel() {
+        $('#ownersTable').DataTable().button('.buttons-excel').trigger();
+    }
+    
+    function exportToPDF() {
+        $('#ownersTable').DataTable().button('.buttons-pdf').trigger();
+    }
+    
+    function printTable() {
+        $('#ownersTable').DataTable().button('.buttons-print').trigger();
+    }
+    
+    // Quick filter functions
+    function filterByStatus(status) {
+        $('#ownersTable').DataTable().column(9).search(status).draw();
+    }
+    
+    function filterByPlace(place) {
+        $('#ownersTable').DataTable().column(4).search(place).draw();
+    }
+</script>
+</body>
+</html>
+{% endblock %}

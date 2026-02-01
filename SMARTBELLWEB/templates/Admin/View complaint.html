@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-pending {
+            background-color: #ffeaa7;
+            color: #8c7000;
+        }
+        .status-replied {
+            background-color: #d1f7c4;
+            color: #0d6b2d;
+        }
+        .date-filter {
+            border-radius: 10px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .date-filter:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        .complaint-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        .complaint-card:hover {
+            background: #eef2ff;
+            transform: translateX(5px);
+        }
+        .complaint-card.pending {
+            border-left-color: #ff6b6b;
+        }
+        .complaint-card.replied {
+            border-left-color: #51cf66;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .reply-box {
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #c8e6c9;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .btn-reply {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-reply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 20px;
+            padding: 8px 15px;
+            border: 2px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+{% extends "Admin/homeindex.html" %}
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-comments me-2"></i>Complaints Management</h4>
+                        <span class="badge bg-light text-dark fs-6">
+                            <i class="fas fa-bell me-1"></i> {{ data|length }} Complaints
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stats-card">
+                                <i class="fas fa-inbox fa-2x text-primary mb-2"></i>
+                                <h5 class="mb-1">Total Complaints</h5>
+                                <h3 class="mb-0">{{ data|length }}</h3>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <!-- Date Filter Form -->
+                    <form name="form1" method="post" action="/MyApp/Viewcomplaint_post/#ab" class="mb-4">
+                        {% csrf_token %}
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4 col-lg-3">
+                                <label for="textfield" class="form-label fw-semibold">
+                                    <i class="fas fa-calendar-start me-1"></i>From Date
+                                </label>
+                                <input type="date" name="textfield" id="textfield" 
+                                       class="form-control date-filter" required>
+                            </div>
+                            <div class="col-md-4 col-lg-3">
+                                <label for="textfield2" class="form-label fw-semibold">
+                                    <i class="fas fa-calendar-end me-1"></i>To Date
+                                </label>
+                                <input type="date" name="textfield2" id="textfield2" 
+                                       class="form-control date-filter" required>
+                            </div>
+                            <div class="col-md-4 col-lg-3">
+                                <button type="submit" name="button" id="button" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-1"></i> Filter
+                                </button>
+                            </div>
+                           
+                        </div>
+                    </form>
+
+                    <!-- Quick Action Buttons -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap gap-2">
+                              
+                               
+                               
+                              
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DataTable -->
+                    <div class="table-responsive">
+                        <table class="table table-hover display" id="complaintsTable" style="width:100%">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="3%">#</th>
+                                    <th width="10%">Date</th>
+                                    <th width="35%">Complaint Details</th>
+                                    <th width="15%">User Information</th>
+                                    <th width="20%">Reply</th>
+                                    <th width="12%">Status</th>
+                                    <th width="5%">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in data %}
+                                <tr class="{% if i.status == 'pending' %}table-warning{% else %}table-success{% endif %}">
+                                    <td class="fw-semibold">{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-calendar-day text-primary me-2"></i>
+                                            <div>
+                                                <div class="fw-bold">{{ i.date }}</div>
+                                                <small class="text-muted">{{ i.date }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="complaint-card {% if i.status == 'pending' %}pending{% else %}replied{% endif %}">
+                                            <div class="d-flex">
+                                                <div class="me-3">
+                                                    <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <p class="mb-1">{{ i.complaint|truncatewords:30 }}</p>
+                                                    {% if i.complaint|length > 100 %}
+                                                    <button class="btn btn-sm btn-link p-0" 
+                                                            onclick="toggleComplaint({{ forloop.counter }})">
+                                                        Read more...
+                                                    </button>
+                                                    <div id="fullComplaint{{ forloop.counter }}" class="d-none">
+                                                        {{ i.complaint }}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar me-3">
+                                                {{ i.HOUSEOWNER.ownername|first|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ i.HOUSEOWNER.ownername }}</div>
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-home me-1"></i>{{ i.HOUSEOWNER.housename }}
+                                                </small>
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-phone me-1"></i>{{ i.HOUSEOWNER.phoneno }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if i.status == 'pending' %}
+                                            <span class="text-muted fst-italic">
+                                                <i class="fas fa-clock me-1"></i>Awaiting reply...
+                                            </span>
+                                        {% else %}
+                                            <div class="reply-box">
+                                                <div class="d-flex">
+                                                    <div class="me-2">
+                                                        <i class="fas fa-reply text-success"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <small class="text-muted d-block mb-1">Reply sent on {{ i.reply_date|default:i.date|date:"d M Y" }}</small>
+                                                        <p class="mb-0">{{ i.reply }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if i.status == 'pending' %}
+                                            <span class="status-badge status-pending">
+                                                <i class="fas fa-clock me-1"></i> Pending
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge status-replied">
+                                                <i class="fas fa-check-circle me-1"></i> Replied
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if i.status == 'pending' %}
+                                            <a href="/MyApp/sendreply/{{ i.id }}#ab" 
+                                               class="btn btn-reply btn-sm" 
+                                               title="Send Reply" data-bs-toggle="tooltip">
+                                                <i class="fas fa-reply"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-outline-success btn-sm" 
+                                                    onclick="viewReply('{{ i.reply }}', '{{ i.HOUSEOWNER.ownername }}')"
+                                                    title="View Reply" data-bs-toggle="tooltip">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <h5>No Complaints Found</h5>
+                                            <p>No complaints registered for the selected date range</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Summary Footer -->
+                <div class="card-footer bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Showing {{ data|length }} complaint(s)
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Data as of {{ "now"|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Reply Modal -->
+<div class="modal fade" id="viewReplyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-reply me-2"></i>View Reply</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">To:</label>
+                    <div class="form-control" id="modalUserName"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Reply Content:</label>
+                    <div class="form-control" style="min-height: 150px;" id="modalReplyContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="copyReply()">
+                    <i class="fas fa-copy me-1"></i> Copy Reply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        const table = $('#complaintsTable').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [5, 10, 25, 50, 100],
+            "order": [[1, 'desc']], // Sort by date descending by default
+            "language": {
+                "lengthMenu": "Show _MENU_ complaints per page",
+                "zeroRecords": "No matching complaints found",
+                "info": "Showing _START_ to _END_ of _TOTAL_ complaints",
+                "infoEmpty": "No complaints available",
+                "infoFiltered": "(filtered from _MAX_ total complaints)",
+                "search": "Search within results:",
+                "paginate": {
+                    "first": "First",
+                    "last": "Last",
+                    "next": "Next",
+                    "previous": "Previous"
+                }
+            },
+            "dom": '<"row"<"col-md-6"B><"col-md-6"f>>' +
+                   '<"row"<"col-md-12"tr>>' +
+                   '<"row"<"col-md-5"i><"col-md-7"p>>',
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel me-1"></i> Excel',
+                    className: 'btn btn-success btn-sm',
+                    title: 'Complaints_Report'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fas fa-file-pdf me-1"></i> PDF',
+                    className: 'btn btn-danger btn-sm',
+                    title: 'Complaints_Report'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print me-1"></i> Print',
+                    className: 'btn btn-info btn-sm',
+                    title: 'Complaints Management Report'
+                }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [2], // Complaint column
+                    "render": function(data, type, row) {
+                        if (type === 'display' && data.length > 100) {
+                            return data.substring(0, 100) + '...';
+                        }
+                        return data;
+                    }
+                }
+            ],
+            "initComplete": function() {
+                // Add status filter
+                $('<select class="form-select form-select-sm ms-2 d-inline-block w-auto"><option value="">All Status</option><option value="pending">Pending</option><option value="replied">Replied</option></select>')
+                    .appendTo($('.dt-buttons'))
+                    .on('change', function() {
+                        table.column(5).search(this.value).draw();
+                    });
+                
+                // Initialize tooltips
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        });
+        
+        // Set today's date as default for "To Date"
+        document.getElementById('textfield2').valueAsDate = new Date();
+        
+        // Set 30 days ago as default for "From Date"
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        document.getElementById('textfield').valueAsDate = thirtyDaysAgo;
+    });
+    
+    // Toggle full complaint text
+    function toggleComplaint(id) {
+        const fullComplaint = document.getElementById('fullComplaint' + id);
+        const button = event.target;
+        
+        if (fullComplaint.classList.contains('d-none')) {
+            fullComplaint.classList.remove('d-none');
+            button.textContent = 'Read less...';
+        } else {
+            fullComplaint.classList.add('d-none');
+            button.textContent = 'Read more...';
+        }
+    }
+    
+    // View reply in modal
+    function viewReply(reply, userName) {
+        document.getElementById('modalReplyContent').textContent = reply;
+        document.getElementById('modalUserName').textContent = userName;
+        
+        const modal = new bootstrap.Modal(document.getElementById('viewReplyModal'));
+        modal.show();
+    }
+    
+    // Copy reply to clipboard
+    function copyReply() {
+        const replyContent = document.getElementById('modalReplyContent').textContent;
+        navigator.clipboard.writeText(replyContent).then(function() {
+            alert('Reply copied to clipboard!');
+        });
+    }
+    
+    // Filter functions
+    function filterByStatus(status) {
+        $('#complaintsTable').DataTable().column(5).search(status).draw();
+    }
+    
+    function showAll() {
+        $('#complaintsTable').DataTable().search('').columns().search('').draw();
+    }
+    
+    function resetFilters() {
+        document.getElementById('textfield').value = '';
+        document.getElementById('textfield2').value = '';
+        showAll();
+    }
+    
+    // Export functions
+    function exportToExcel() {
+        $('#complaintsTable').DataTable().button('.buttons-excel').trigger();
+    }
+    
+    function exportToPDF() {
+        $('#complaintsTable').DataTable().button('.buttons-pdf').trigger();
+    }
+    
+    function printTable() {
+        $('#complaintsTable').DataTable().button('.buttons-print').trigger();
+    }
+</script>
+</body>
+{% endblock %}
+</html>
